@@ -5,6 +5,9 @@ TCP connections within a machine
 Navigate to Connect\
 `cd Connect/`
 
+If it is your first time using this tool, run\
+`sh init.sh`
+
 Run the below command to get help\
 `./connect -help`
 
