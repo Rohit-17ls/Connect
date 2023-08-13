@@ -16,7 +16,8 @@ int main(int argc, char* argv[]){
         if(argc == 2 && strcmp(argv[1], "-help") == 0){                                                                                                                                                            
                 printf("To connect, run : ./connect -[MODE] -[PORT] [NAME]\n");                                                                                                                                    
                 printf("For instance to connect as client : ./connect -client -8082 @Jack\n");                                                                                                                     
-                printf("For instance to serve as server   : ./connect -server -8082 @Jack\n\n");                                                                                                                   
+                printf("For instance to serve as server   : ./connect -server -8082 @Jack\n\n");
+                printf("For more help visit : https://github.com/Sly-17/Connect\n\n");
                 exit(0);                                                                                                                                                                                           
         }                                                                                                                                                                                                          
                                                                                                                                                                                                                    
