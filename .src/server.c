@@ -7,13 +7,19 @@
 #include <string.h>                                                                                                                                                                                                
 #include <pthread.h>                                                                                                                                                                                               
 #include <semaphore.h>
+#include <time.h>
 
 #define BUFFER_SIZE 1024 * 1024                                                                                                                                                                                  
+#define BUFFER_PADDING 200
 #define MAX_CLIENTS 5                                                                                                                                                                                                                                                                                                                                                                                         
+
 int client_sockets[MAX_CLIENTS] = {-1}; 
 sem_t mutex;
+time_t currentTime;
+struct tm* timeInfo;
 
-char buffer[BUFFER_SIZE + 200] = {0};
+
+char buffer[BUFFER_SIZE + BUFFER_PADDING] = {0};
 
 void error_and_exit(const char* error){                                                                                                                                                                            
         perror(error);                                                                                                                                                                                             
@@ -35,23 +41,38 @@ void* routine(void* args){
         read(client->socket, client->name, 100);                                                                                                                                                                   
         printf("Client %s has joined and is using socket %d\n", client->name, client->socket);
 
+		sem_wait(&mutex);
+		time(&currentTime);
+		timeInfo = localtime(&currentTime);
+		sprintf(buffer, "%s has joined (%02d:%02d)\n", client->name, timeInfo->tm_hour, timeInfo->tm_min); 
+		for(int ind = 0; ind < MAX_CLIENTS; ind++){
+			if(ind != client->id && client_sockets[ind] != -1){
+				send(client_sockets[ind], buffer, strlen(buffer), 0);
+			}
+		}
+		sem_post(&mutex);
+
         while(1){                                                                                                                                                                                                  
-                read(client->socket, client->buffer, BUFFER_SIZE);                                                                                                                                                 
-                if(strcmp(client->buffer, "exit\n") == 0){                                                                                                                                                         
-                        printf("%s has left\n", client->name);                                                                                                                                                                   
+                read(client->socket, client->buffer, BUFFER_SIZE);
+
+				time(&currentTime);
+				timeInfo = localtime(&currentTime);
+
+				if(strcmp(client->buffer, "exit\n") == 0){                                                                                                                                                         
+                        printf("%s has left (%02d:%02d)\n", client->name, timeInfo->tm_hour, timeInfo->tm_min);                                                                                                                                                                   
                         break;                                                                                                                                                                                     
                 }                                                                                                                                                                                                  
                 
 				sem_wait(&mutex);
 
-				sprintf(buffer, "%s : %s", client->name, client->buffer);
+				sprintf(buffer, "%s [%02d:%02d:%02d]: %s", client->name,  timeInfo->tm_hour, timeInfo->tm_min, timeInfo->tm_sec, client->buffer);
 				for(int ind = 0; ind < MAX_CLIENTS; ind++){
 					if(ind != client->id && client_sockets[ind] != -1){
 						send(client_sockets[ind], buffer, strlen(buffer), 0);
 					}
 				}
                 
-				printf("%s : %s\n", client->name, client->buffer);
+				printf("%s [%02d:%02d:%02d]: %s\n", client->name, timeInfo->tm_hour, timeInfo->tm_min, timeInfo->tm_sec,  client->buffer);
 				memset(buffer, 0, BUFFER_SIZE + 200);
 				
 				sem_post(&mutex);

@@ -31,7 +31,7 @@ int main(int argc, char* argv[]){
                                                                                                                                                                                                                    
         const int PORT = atoi(argv[2] + 1);                                                                                                                                                                        
 
-        if(role == CLIENT){                                                                                                                                                                                        
+        if(role == CLIENT){                                                                                                                                                                    
                 execlp("./client", "./client", argv[2], argv[3], NULL);                                                                                                                                                  
         }else if(role == SERVER){                                                                                                                                                                                  
                 execlp("./server", "./server", argv[2], argv[3], NULL);                                                                                                                                                  

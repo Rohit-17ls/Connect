@@ -1,6 +1,7 @@
 #include <stdio.h>                                                                                                                                                                                                 
 #include <stdlib.h>                                                                                                                                                                                                
 #include <unistd.h>                                                                                                                                                                                                
+#include <fcntl.h>
 #include <sys/socket.h>                                                                                                                                                                                            
 #include <arpa/inet.h>                                                                                                                                                                                             
 #include <sys/types.h>                                                                                                                                                                                             
@@ -13,7 +14,9 @@ enum Status { QUIT, ACTIVE};
 
 enum Status client_status = ACTIVE;
 
-char read_buffer[BUFFER_SIZE] = {0};    
+char read_buffer[BUFFER_SIZE] = {0};  
+
+
                                                                                                                                                                                                                    
 void error_and_exit(const char* error){                                                                                                                                                                            
         perror(error);                                                                                                                                                                                             
@@ -28,7 +31,27 @@ void* routine(void* args){
 				memset(read_buffer, 0, BUFFER_SIZE);
         }                                                                                                                                                                                                          
                                                                                                                                                                                                                    
-}                                                                                                                                                                                                                  
+}              
+
+void remindAboutNotifications(){
+		int read_fd = open("./notify.js", O_RDONLY);
+		if(read_fd < 0) return;
+
+		printf("Connected!!\nIf you wish to ");
+		printf("\033[0;31mreceive notifications (works only on the browser)  on incoming messages");
+		printf("\033[0;37m(OPTIONAL) follow below steps:\n");
+		printf("1. Open the devtools with Ctrl + Shift + i\n");
+		printf("2. Drop the following snippet of code into the console and run it and then immediately close the devtools.\n\n");
+		
+		char buf;
+		while(read(read_fd, &buf, 1)){
+			printf("\033[0;32m%c", buf);
+		}
+
+		close(read_fd);
+		printf("\033[0;37m\n\n");
+
+}
                                                                                                                                                                                                                    
 int main(int argc, char* argv[]){                                                                                                                                                                                  
                                                                                                                                                                                                                    
@@ -36,7 +59,7 @@ int main(int argc, char* argv[]){
         const int PORT = atoi(argv[1] + 1);                                                                                                                                                                        
         const char* name = argv[2];                                                                                                                                                                                
                                                                                                                                                                                                                    
-        printf("Connecting as client to PORT %d with username %s...\n", PORT, name);                                                                                                                               
+        printf("Connecting as client to PORT %d with username %s...\n", PORT, name);
                                                                                                                                                                                                                    
         int client_sockfd;                                                                                                                                                                                         
         struct sockaddr_in server_address;                                                                                                                                                                         
@@ -54,7 +77,9 @@ int main(int argc, char* argv[]){
                                                                                                                                                                                                                    
         if(connect(client_sockfd, (struct sockaddr*)(&server_address), sizeof(server_address)) < 0){                                                                                                               
                 error_and_exit("ERROR : Could not connect\n");                                                                                                                                                     
-        }                                                                                                                                                                                                          
+        }                                                                           
+
+		remindAboutNotifications();
                                                                                                                                                                                                                    
                                                                                                                                                                                                                    
         sprintf(buffer, "%s", name);                                                                                                                                                                               
@@ -65,7 +90,7 @@ int main(int argc, char* argv[]){
         pthread_create(&client_thread, NULL, &routine, (void*)(&client_sockfd));                                                                                                                                   
                                                                                                                                                                                                                    
         while(1){           
-                fgets(buffer, BUFFER_SIZE, stdin);                                                                                                                                                                 
+                fgets(buffer, BUFFER_SIZE, stdin);                                                                                                                                                                
                 send(client_sockfd, buffer, strlen(buffer), 0);                                                                                                                                                    
                 if(strcmp(buffer, "exit\n") == 0) break;                                                                                                                                                           
                                                                                                                                                                                                                    
